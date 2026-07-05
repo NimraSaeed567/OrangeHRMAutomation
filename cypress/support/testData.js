@@ -20,3 +20,9 @@ export function randomUsername() {
   const lastName = pick(LAST_NAMES);
   return `${firstName}.${lastName}.${uniqueSuffix()}`.toLowerCase();
 }
+
+export function randomCandidate() {
+  const { firstName, lastName } = randomPersonName();
+  const email = `${firstName}.${lastName}@example.com`.toLowerCase();
+  return { firstName, lastName, email };
+}
