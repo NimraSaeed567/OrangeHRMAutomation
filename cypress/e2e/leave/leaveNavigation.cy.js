@@ -20,4 +20,16 @@ describe("Leave", () => {
     LeavePage.visitLeaveList();
     cy.contains("Leave List").should("be.visible");
   });
+
+  it("displays filter controls on the Leave List admin view", () => {
+    LeavePage.visitLeaveList();
+    cy.contains("button", "Search").should("be.visible");
+    cy.contains("button", "Reset").should("be.visible");
+  });
+
+  it("displays the My Leave List calendar/legend controls", () => {
+    LeavePage.visitMyLeave();
+    cy.contains("button", "Search").should("be.visible");
+    cy.contains("button", "Reset").should("be.visible");
+  });
 });

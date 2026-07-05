@@ -5,10 +5,17 @@ function pick(list) {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-// Short, non-numeric-looking, still unique per run - avoids leaving raw
+// Short, non-numeric-looking, still unique per call - avoids leaving raw
 // millisecond timestamps as visible test data in a shared public demo.
+// Mixes in Math.random() because Date.now() alone can repeat when multiple
+// values are generated within the same millisecond (e.g. two calls back to
+// back in one test).
 export function uniqueSuffix() {
-  return Date.now().toString(36).slice(-4);
+  const time = Date.now().toString(36).slice(-3);
+  const rand = Math.floor(Math.random() * 36 ** 2)
+    .toString(36)
+    .padStart(2, "0");
+  return `${time}${rand}`;
 }
 
 export function randomPersonName() {
@@ -25,4 +32,14 @@ export function randomCandidate() {
   const { firstName, lastName } = randomPersonName();
   const email = `${firstName}.${lastName}@example.com`.toLowerCase();
   return { firstName, lastName, email };
+}
+
+const JOB_TITLE_WORDS = ["Analyst", "Engineer", "Coordinator", "Specialist", "Consultant", "Associate"];
+
+export function randomJobTitle() {
+  return `QA ${pick(JOB_TITLE_WORDS)} ${uniqueSuffix()}`;
+}
+
+export function randomNationality() {
+  return `Cy Land ${uniqueSuffix()}`;
 }

@@ -17,6 +17,10 @@ class RecruitmentPage {
     return cy.contains("button", "Search");
   }
 
+  get cancelButton() {
+    return cy.contains("button", "Cancel");
+  }
+
   get candidateNameSearchInput() {
     return cy.contains("label", "Candidate Name").parents(".oxd-input-group").find("input");
   }
@@ -49,10 +53,16 @@ class RecruitmentPage {
     return this;
   }
 
+  // Trusts the DELETE call's success response rather than re-verifying via
+  // search afterward - this shared demo has a real indexing lag between a
+  // state change and search results reflecting it (same issue seen with
+  // newly created PIM employees), so an immediate re-search is unreliable.
   deleteCandidateByCheckbox() {
     cy.get(".oxd-table-card").first().find('input[type="checkbox"]').click({ force: true });
     cy.contains("button", "Delete Selected").click();
+    cy.intercept("DELETE", "**/api/v2/recruitment/candidates*").as("deleteCandidate");
     cy.contains("button", "Yes, Delete").click();
+    cy.wait("@deleteCandidate").its("response.statusCode").should("eq", 200);
     return this;
   }
 }

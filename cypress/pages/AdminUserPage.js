@@ -70,13 +70,11 @@ class AdminUserPage {
     return this;
   }
 
-  // Sets the "Type for hints..." autocomplete value in one atomic event rather
-  // than typing char-by-char. Typing key-by-key fires one API request per
-  // keystroke (no debounce on this widget), and if an earlier keystroke's
-  // (empty) response arrives after the final query's response, it silently
-  // overwrites the good suggestion list with an empty one. Setting the value
-  // in one shot means only the final query is ever requested.
-  selectFromAutocomplete(query) {
+  // This widget intermittently fails to register a selection regardless of
+  // whether it's clicked or chosen via keyboard - a real, occasional race in
+  // the live app we don't control. Rather than chase a single perfectly-timed
+  // approach, retry the whole selection when it doesn't register.
+  selectFromAutocomplete(query, attempt = 1) {
     cy.intercept("GET", "**/api/v2/pim/employees*").as("employeeAutocomplete");
     cy.get('input[placeholder="Type for hints..."]')
       .first()
@@ -90,13 +88,34 @@ class AdminUserPage {
       const decodedUrl = decodeURIComponent(interception.request.url.replace(/\+/g, " "));
       expect(decodedUrl).to.include(`nameOrId=${query}`);
     });
-    return cy
-      .get(AUTOCOMPLETE_OPTION_SELECTOR, { timeout: 10000 })
+    // Read the text, then select fresh at selection time rather than reusing
+    // a captured element reference - if Vue re-renders the list in between
+    // (even with identical data), a captured node detaches.
+    let employeeName;
+    cy.get(AUTOCOMPLETE_OPTION_SELECTOR, { timeout: 10000 })
       .should("have.length.at.least", 1)
       .first()
-      .then(($option) => {
-        const employeeName = $option.text().trim();
-        cy.wrap($option).click();
+      .invoke("text")
+      .then((text) => {
+        employeeName = text.trim();
+      });
+    // Keyboard selection avoids the blur-race a mouse click can trigger
+    // (input blurring before the click on the option completes), but even
+    // this doesn't always register - hence the retry below.
+    cy.get('input[placeholder="Type for hints..."]').first().type("{downarrow}{enter}");
+
+    return cy
+      .get('input[placeholder="Type for hints..."]')
+      .first()
+      .parents(".oxd-input-group")
+      .then(($group) => {
+        if ($group.text().includes("Invalid")) {
+          if (attempt >= 3) {
+            throw new Error(`Autocomplete selection for "${query}" still Invalid after ${attempt} attempts`);
+          }
+          cy.log(`Autocomplete selection did not register, retrying (attempt ${attempt + 1})`);
+          return this.selectFromAutocomplete(query, attempt + 1);
+        }
         return cy.wrap(employeeName);
       });
   }

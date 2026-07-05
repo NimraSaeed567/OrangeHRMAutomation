@@ -14,6 +14,10 @@ class DirectoryPage {
     return cy.contains("button", "Search");
   }
 
+  get resetButton() {
+    return cy.contains("button", "Reset");
+  }
+
   searchByEmployeeName(name) {
     cy.intercept("GET", "**/api/v2/directory/employees*").as("directoryAutocomplete");
     this.employeeNameInput.clear().invoke("val", name).trigger("input").trigger("keyup");

@@ -46,4 +46,19 @@ describe("PIM > Employee List", () => {
       cy.contains("No Records Found").should("be.visible");
     });
   });
+
+  // First/Middle/Last are sub-fields of one "Employee Full Name" group, so
+  // a missing name produces a single combined Required message, not one per
+  // sub-field.
+  it("shows a validation error when Employee Name is missing on Add Employee", () => {
+    PimPage.visitAddEmployee();
+    PimPage.saveButton.click();
+    cy.contains(".oxd-input-group .oxd-text--span", "Required").should("be.visible");
+  });
+
+  it("shows no records for an Employee Id that does not exist", () => {
+    PimPage.searchByEmployeeId("999999");
+    PimPage.submitSearch();
+    cy.contains("No Records Found").should("be.visible");
+  });
 });
